@@ -28,9 +28,9 @@ except ImportError:
 
 
 VERTICES = [
-    -0.5, -0.5, 0.0, 1.0, 0.0, 0.0,
-    0.5, -0.5, 0.0, 0.0, 1.0, 0.0,
-    0.0, 0.5, 0.0, 0.0, 0.0, 1.0
+    -0.5, -0.5, 0.0, 1.0, 0.5, 0.2,
+    0.5, -0.5, 0.0, 1.0, 0.5, 0.2,
+    0.0, 0.5, 0.0, 1.0, 0.5, 0.2,
 ]
 VERTICES = np.array(VERTICES, dtype=np.float32)
 
@@ -88,40 +88,12 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
     def initializeGL(self) -> None:
         self.context.aboutToBeDestroyed.connect(self.cleanup)
+
         self.initializeOpenGLFunctions()
-        self.glClearColor(0.3, 0.0, 0.1, 1.0)
+        self.glClearColor(0.1, 0.0, 0.1, 0.5)
 
-        self.program.addShaderFromSourceFile(QOpenGLShader.Vertex, "vertex_shader.glsl")
-        self.program.addShaderFromSourceFile(QOpenGLShader.Fragment, "fragment_shader.glsl")
-        self.program.bindAttributeLocation("vertex", 0)
-        self.program.bindAttributeLocation("colour", 1)
-        self.program.link()
-
-        self.program.bind()
-
-        self.vao.create()
-        vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
-
-        self.vbo.create()
-        self.vbo.bind()
-        self.vbo.allocate(VERTICES, VERTICES.nbytes)
-
-        self.vbo.bind()
-        self.glEnableVertexAttribArray(0)
-        self.glEnableVertexAttribArray(1)
-        float_size = ctypes.sizeof(ctypes.c_float)
-        null = VoidPtr(0)
-        pointer = VoidPtr(3 * float_size)
-        self.glVertexAttribPointer(
-            0, 3, int(gl.GL_FLOAT), int(gl.GL_FALSE), 6 * float_size, null
-        )
-        self.glVertexAttribPointer(
-            1, 3, int(gl.GL_FLOAT), int(gl.GL_FALSE), 6 * float_size, pointer
-        )
-        self.vbo.release()
-
-        self.program.release()
-        vao_binder = None
+        self.build_shaders()
+        self.create_vbo()
 
     def paintGL(self) -> None:
         self.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
@@ -137,6 +109,38 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
     def resizeGL(self, width: int, height: int) -> None:
         self.glViewport(0, 0, width, height)
+
+    def build_shaders(self) -> None:
+        self.program.addShaderFromSourceFile(QOpenGLShader.Vertex, "vertex_shader.glsl")
+        self.program.addShaderFromSourceFile(QOpenGLShader.Fragment, "fragment_shader.glsl")
+        self.program.bindAttributeLocation("vertex", 0)
+        self.program.bindAttributeLocation("colour", 1)
+        self.program.link()
+
+    def create_vbo(self) -> None:
+        self.program.bind()
+        self.vao.create()
+        vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
+
+        self.vbo.create()
+        self.vbo.bind()
+        self.vbo.allocate(VERTICES, VERTICES.nbytes)
+        self.glEnableVertexAttribArray(0)
+        self.glEnableVertexAttribArray(1)
+        float_size = ctypes.sizeof(ctypes.c_float)
+        null = VoidPtr(0)
+        pointer = VoidPtr(3 * float_size)
+        self.glVertexAttribPointer(
+            0, 3, int(gl.GL_FLOAT), int(gl.GL_FALSE), 6 * float_size, null
+        )
+        self.glVertexAttribPointer(
+            1, 3, int(gl.GL_FLOAT), int(gl.GL_FALSE), 6 * float_size, pointer
+        )
+        self.vbo.release()
+        self.vao.release()
+
+        self.program.release()
+        vao_binder = None
 
     @Slot()
     def cleanup(self):
