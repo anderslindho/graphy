@@ -2,16 +2,18 @@
 
 import ctypes
 import sys
+import time
 
+import pyrr
 from PySide2.QtCore import Slot, QTimer
 from PySide2.QtGui import (
     QSurfaceFormat, QOpenGLContext, QOpenGLFunctions, QOpenGLVertexArrayObject, QOpenGLBuffer,
     QOpenGLShaderProgram, QOpenGLShader,
-    QMouseEvent)
+    QMouseEvent, QMatrix4x4)
 from PySide2.QtWidgets import QApplication, QMainWindow, QOpenGLWidget, QMessageBox
 from shiboken2.shiboken2 import VoidPtr
 
-from geometry import VERTICES
+from geometry import VERTICES, _INDICES, _VERTICES
 
 try:
     import OpenGL.GL as gl
@@ -71,17 +73,21 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         QOpenGLFunctions.__init__(self, *args, **kwargs)
 
         self.program = QOpenGLShaderProgram()
-        self.vbo = QOpenGLBuffer()
+        self.vbo = QOpenGLBuffer(QOpenGLBuffer.VertexBuffer)
+        self.ebo = QOpenGLBuffer(QOpenGLBuffer.IndexBuffer)
         self.vao = QOpenGLVertexArrayObject()
+
+        self.rotation_loc = None
+        self.attrib_loc = None
 
         self.setFormat(fmt)
         self.context = QOpenGLContext(self)
         if not self.context.create():
-            raise Exception("Unable to create GL context")
+            raise RuntimeError("Unable to create GL context")
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update)
-        self.timer.start(1000)
+        self.timer.start(10)
 
     def initializeGL(self) -> None:
         self.context.aboutToBeDestroyed.connect(self.cleanup)
@@ -101,9 +107,15 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
     def render(self) -> None:
         vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
+        if not self.program.isLinked():
+            raise RuntimeError("Shaders not linked")
         self.program.bind()
-        #self.glDrawElements(gl.GL_TRIANGLES, 3, gl.GL_UNSIGNED_INT, None)
-        self.glDrawArrays(gl.GL_TRIANGLES, 0, 3)  # TODO: switch to glDrawElements
+
+        rot_x = pyrr.Matrix44.from_x_rotation(time.time())
+        gl.glUniformMatrix4fv(self.rotation_loc, 1, gl.GL_FALSE, rot_x)
+
+        self.glDrawElements(gl.GL_TRIANGLES, len(_INDICES), gl.GL_UNSIGNED_INT, VoidPtr(0))
+
         self.program.release()
         vao_binder = None
 
@@ -122,9 +134,15 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
         self.vbo.create()
         self.vbo.bind()
-        self.vbo.allocate(VERTICES, VERTICES.nbytes)
+        self.vbo.allocate(_VERTICES, _VERTICES.nbytes)
+
+        self.attrib_loc = self.program.attributeLocation("a_position")
+        self.rotation_loc = self.program.uniformLocation("rotation")
 
         # TODO: create IBO
+        self.ebo.create()
+        self.ebo.bind()
+        self.ebo.allocate(_INDICES, _INDICES.nbytes)
 
         float_size = ctypes.sizeof(ctypes.c_float)  # (4)
         null = VoidPtr(0)
@@ -137,15 +155,17 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.glVertexAttribPointer(
             1, 3, gl.GL_FLOAT, gl.GL_FALSE, 6 * float_size, pointer
         )
-        self.vbo.release()
         self.vao.release()
+        self.vbo.release()
+        self.ebo.release()
 
         self.program.release()
         vao_binder = None
 
     @Slot()
     def cleanup(self):
-        self.makeCurrent()
+        if not self.makeCurrent():
+            raise Exception("Could not make context current")
         self.vbo.destroy()
         self.program.bind()
         self.program.removeAllShaders()
