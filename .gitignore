@@ -1,4 +1,5 @@
+ignore/
+__pychache__/
 .idea
 .DS_Store
-__pychache__/
 *.pyc

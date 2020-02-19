@@ -8,12 +8,12 @@ import pyrr
 from PySide2.QtCore import Slot, QTimer
 from PySide2.QtGui import (
     QSurfaceFormat, QOpenGLContext, QOpenGLFunctions, QOpenGLVertexArrayObject, QOpenGLBuffer,
-    QOpenGLShaderProgram, QOpenGLShader,
-    QMouseEvent, QMatrix4x4)
+    QOpenGLShaderProgram, QOpenGLShader
+)
 from PySide2.QtWidgets import QApplication, QMainWindow, QOpenGLWidget, QMessageBox
 from shiboken2.shiboken2 import VoidPtr
 
-from geometry import VERTICES, _INDICES, _VERTICES
+from geometry import CUBE_VERTICES, CUBE_INDICES
 
 try:
     import OpenGL.GL as gl
@@ -77,7 +77,8 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.ebo = QOpenGLBuffer(QOpenGLBuffer.IndexBuffer)
         self.vao = QOpenGLVertexArrayObject()
 
-        self.rotation_loc = None
+        self.model = None
+        self.projection = None
         self.attrib_loc = None
 
         self.setFormat(fmt)
@@ -93,9 +94,9 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.context.aboutToBeDestroyed.connect(self.cleanup)
 
         self.initializeOpenGLFunctions()
-        self.glClearColor(0.1, 0.0, 0.1, 0.5)
         self.build_shaders()
         self.create_vbo()
+        self.glClearColor(0.1, 0.0, 0.1, 0.5)
 
     def paintGL(self) -> None:
         self.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
@@ -111,10 +112,11 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
             raise RuntimeError("Shaders not linked")
         self.program.bind()
 
-        rot_x = pyrr.Matrix44.from_x_rotation(time.time())
-        gl.glUniformMatrix4fv(self.rotation_loc, 1, gl.GL_FALSE, rot_x)
+        rot_x = pyrr.Matrix44.identity().from_x_rotation(0.3 * time.time())  # TODO: switch to QMatrix
+        rot_y = pyrr.Matrix44.identity().from_y_rotation(time.time())  # TODO: switch to QMatrix
+        gl.glUniformMatrix4fv(self.model, 1, gl.GL_FALSE, rot_x * rot_y)  # TODO: switch to Qt functions (doesn't work)
 
-        self.glDrawElements(gl.GL_TRIANGLES, len(_INDICES), gl.GL_UNSIGNED_INT, VoidPtr(0))
+        self.glDrawElements(gl.GL_TRIANGLES, len(CUBE_INDICES), gl.GL_UNSIGNED_INT, VoidPtr(0))
 
         self.program.release()
         vao_binder = None
@@ -134,15 +136,15 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
         self.vbo.create()
         self.vbo.bind()
-        self.vbo.allocate(_VERTICES, _VERTICES.nbytes)
+        self.vbo.allocate(CUBE_VERTICES, CUBE_VERTICES.nbytes)
 
         self.attrib_loc = self.program.attributeLocation("a_position")
-        self.rotation_loc = self.program.uniformLocation("rotation")
+        self.model = self.program.uniformLocation("model")
 
         # TODO: create IBO
         self.ebo.create()
         self.ebo.bind()
-        self.ebo.allocate(_INDICES, _INDICES.nbytes)
+        self.ebo.allocate(CUBE_INDICES, CUBE_INDICES.nbytes)
 
         float_size = ctypes.sizeof(ctypes.c_float)  # (4)
         null = VoidPtr(0)
