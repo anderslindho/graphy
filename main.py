@@ -3,7 +3,7 @@
 import ctypes
 import sys
 
-from PySide2.QtCore import Slot
+from PySide2.QtCore import Slot, QTimer
 from PySide2.QtGui import (
     QSurfaceFormat, QOpenGLContext, QOpenGLFunctions, QOpenGLVertexArrayObject, QOpenGLBuffer,
     QOpenGLShaderProgram, QOpenGLShader,
@@ -79,6 +79,10 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         if not self.context.create():
             raise Exception("Unable to create GL context")
 
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update)
+        self.timer.start(1000)
+
     def initializeGL(self) -> None:
         self.context.aboutToBeDestroyed.connect(self.cleanup)
 
@@ -92,14 +96,13 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.glEnable(gl.GL_DEPTH_TEST)
         self.render()
 
-        self.update()  # TODO: add timer
-
     def resizeGL(self, width: int, height: int) -> None:
         self.glViewport(0, 0, width, height)
 
     def render(self) -> None:
         vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
         self.program.bind()
+        #self.glDrawElements(gl.GL_TRIANGLES, 3, gl.GL_UNSIGNED_INT, None)
         self.glDrawArrays(gl.GL_TRIANGLES, 0, 3)  # TODO: switch to glDrawElements
         self.program.release()
         vao_binder = None
