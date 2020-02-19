@@ -6,8 +6,8 @@ import sys
 from PySide2.QtCore import Slot
 from PySide2.QtGui import (
     QSurfaceFormat, QOpenGLContext, QOpenGLFunctions, QOpenGLVertexArrayObject, QOpenGLBuffer,
-    QOpenGLShaderProgram, QOpenGLShader
-)
+    QOpenGLShaderProgram, QOpenGLShader,
+    QMouseEvent)
 from PySide2.QtWidgets import QApplication, QMainWindow, QOpenGLWidget, QMessageBox
 from shiboken2.shiboken2 import VoidPtr
 
@@ -20,7 +20,7 @@ except ImportError:
     messageBox = QMessageBox(
         QMessageBox.Critical,
         "ContextInfo",
-        "PyOpenGL must be installed to run this example.",
+        "PyOpenGL must be installed to run this example",
         QMessageBox.Close,
     )
     messageBox.setDetailedText("Run:\npip install PyOpenGL")
@@ -90,27 +90,27 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
     def paintGL(self) -> None:
         self.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
         self.glEnable(gl.GL_DEPTH_TEST)
+        self.render()
 
-        vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
-        self.program.bind()
-        self.glDrawArrays(gl.GL_TRIANGLES, 0, 3)
-        self.program.release()
-        vao_binder = None
-
-        self.update()
+        self.update()  # TODO: add timer
 
     def resizeGL(self, width: int, height: int) -> None:
         self.glViewport(0, 0, width, height)
 
+    def render(self) -> None:
+        vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
+        self.program.bind()
+        self.glDrawArrays(gl.GL_TRIANGLES, 0, 3)  # TODO: switch to glDrawElements
+        self.program.release()
+        vao_binder = None
+
     def build_shaders(self) -> None:
         if not self.program.addShaderFromSourceFile(QOpenGLShader.Vertex, "vertex_shader.glsl"):
-            raise FileNotFoundError
+            raise FileNotFoundError("Unable to load vertex shader")
         if not self.program.addShaderFromSourceFile(QOpenGLShader.Fragment, "fragment_shader.glsl"):
-            raise FileNotFoundError
-        #self.program.bindAttributeLocation("a_position", 0)
-        #self.program.bindAttributeLocation("a_color", 1)
+            raise FileNotFoundError("Unable to load fragment shader")
         if not self.program.link():
-            raise RuntimeError
+            raise RuntimeError("Unable to link shader programme")
 
     def create_vbo(self) -> None:
         self.program.bind()  # suspicious behaviour
@@ -120,6 +120,8 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.vbo.create()
         self.vbo.bind()
         self.vbo.allocate(VERTICES, VERTICES.nbytes)
+
+        # TODO: create IBO
 
         float_size = ctypes.sizeof(ctypes.c_float)  # (4)
         null = VoidPtr(0)
