@@ -57,7 +57,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.models = []
         self.model = None
         self.projection = None
-        #self.camera = None
+
         self.camera = Camera()
         self.last_pos = QPoint(self.width / 2, self.height / 2)
 
@@ -68,7 +68,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update)
-        self.timer.start(15)
+        self.timer.start(20)
 
     def initializeGL(self) -> None:
         self.context.aboutToBeDestroyed.connect(self.cleanup)
@@ -138,12 +138,9 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.projection_loc = self.program.uniformLocation("projection")
         self.camera_loc = self.program.uniformLocation("camera")
 
-        for i in range(100):
-            x, y, z = random.uniform(-15, 15), random.uniform(-10, 10), random.uniform(-10, 10)
+        for i in range(200):
+            x, y, z = random.uniform(-10, 10), random.uniform(-10, 10), random.uniform(-10, 10)
             self.models.append(pyrr.matrix44.create_from_translation(pyrr.Vector3([x, y, z])))
-
-        #eye, target, up = pyrr.Vector3([1, 0, 25]), pyrr.Vector3([0, 0, 0]), pyrr.Vector3([0, 0, 1])
-        #self.camera = pyrr.matrix44.create_look_at(eye, target, up)
 
         self.ebo.create()
         self.ebo.bind()
@@ -175,7 +172,8 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         dy = event.y() - self.last_pos.y()
 
         if event.buttons():
-            self.camera.process_mouse_movement(float(dx), float(dy))
+            #self.camera.look_around_mouse_movement(float(dx), float(dy))
+            self.camera.rotate_around_mouse_movement(float(dx), float(dy))
 
         self.last_pos = QPoint(event.pos())
 
