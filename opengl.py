@@ -131,14 +131,13 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.projection_loc = self.program.uniformLocation("projection")
         self.camera_loc = self.program.uniformLocation("camera")
 
-        for i in range(50):
-            x, y, z = random.uniform(-10, 10), random.uniform(-10, 10), random.uniform(-10, 10)
+        for i in range(100):
+            x, y, z = random.uniform(-15, 15), random.uniform(-10, 10), random.uniform(-10, 10)
             self.models.append(pyrr.matrix44.create_from_translation(pyrr.Vector3([x, y, z])))
 
         eye, target, up = pyrr.Vector3([1, 0, 25]), pyrr.Vector3([0, 0, 0]), pyrr.Vector3([0, 0, 1])
         self.camera = pyrr.matrix44.create_look_at(eye, target, up)
 
-        # TODO: create IBO
         self.ebo.create()
         self.ebo.bind()
         self.ebo.allocate(self.shape.indices, self.shape.indices.nbytes)

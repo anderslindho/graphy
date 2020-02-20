@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Triangle:
     """flat triangle"""
 
@@ -9,6 +10,7 @@ class Triangle:
              0.5, -0.5,  0.0, 1.0, 0.5, 0.2,
              0.0,  0.5,  0.0, 1.0, 0.5, 0.2,
         ], dtype=np.float32)
+
 
 class Square:
     """square made out of two triangles (index buffer)"""
@@ -25,11 +27,11 @@ class Square:
             1, 2, 3,
         ], dtype=np.uint32)
 
+
 class Cube:
     """cube made out of triangles (index buffer)"""
 
     def __init__(self):
-        #self._CUBE_VERTICES = np.array([
         #    -0.5, -0.5,  0.5, 1.0, 0.5, 0.2,
         #     0.5, -0.5,  0.5, 1.0, 0.5, 0.2,
         #     0.5,  0.5,  0.5, 1.0, 0.5, 0.2,
