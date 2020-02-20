@@ -4,6 +4,8 @@ import ctypes
 import sys
 import time
 
+import numpy as np
+
 import pyrr
 from PySide2.QtCore import Slot, QTimer
 from PySide2.QtGui import (
@@ -77,9 +79,14 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.ebo = QOpenGLBuffer(QOpenGLBuffer.IndexBuffer)
         self.vao = QOpenGLVertexArrayObject()
 
-        self.model = None
-        self.projection = None
+        self.model_loc = None
+        self.projection_loc = None
         self.attrib_loc = None
+
+        self.model = None
+
+        self.projection = None
+        self.translation = None
 
         self.setFormat(fmt)
         self.context = QOpenGLContext(self)
@@ -104,6 +111,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.render()
 
     def resizeGL(self, width: int, height: int) -> None:
+        self.width, self.height = width, height
         self.glViewport(0, 0, width, height)
 
     def render(self) -> None:
@@ -112,9 +120,17 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
             raise RuntimeError("Shaders not linked")
         self.program.bind()
 
-        rot_x = pyrr.Matrix44.identity().from_x_rotation(0.3 * time.time())  # TODO: switch to QMatrix
-        rot_y = pyrr.Matrix44.identity().from_y_rotation(time.time())  # TODO: switch to QMatrix
-        gl.glUniformMatrix4fv(self.model, 1, gl.GL_FALSE, rot_x * rot_y)  # TODO: switch to Qt functions (doesn't work)
+        rot_x = pyrr.Matrix44.from_x_rotation(0.6 * time.time())
+        rot_y = pyrr.Matrix44.from_y_rotation(0.2 * time.time())
+        rot_z = pyrr.Matrix44.from_z_rotation(0.1 * time.time())
+
+        rotationxy = pyrr.matrix44.multiply(rot_x, rot_y)
+        rotation = pyrr.matrix44.multiply(rotationxy, rot_z)
+        self.model = pyrr.matrix44.multiply(rotation, self.translation)
+        #self.model = rotation
+        gl.glUniformMatrix4fv(self.projection_loc, 1, gl.GL_FALSE, self.projection)  # TODO: switch to Qt functions (doesn't work
+
+        gl.glUniformMatrix4fv(self.model_loc, 1, gl.GL_FALSE, self.model)  # TODO: switch to Qt functions (doesn't work)
 
         self.glDrawElements(gl.GL_TRIANGLES, len(CUBE_INDICES), gl.GL_UNSIGNED_INT, VoidPtr(0))
 
@@ -139,7 +155,11 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.vbo.allocate(CUBE_VERTICES, CUBE_VERTICES.nbytes)
 
         self.attrib_loc = self.program.attributeLocation("a_position")
-        self.model = self.program.uniformLocation("model")
+        self.model_loc = self.program.uniformLocation("model")
+        self.projection_loc = self.program.uniformLocation("projection")
+
+        self.projection = pyrr.matrix44.create_perspective_projection_matrix(45, 1280/720, 0.1, 100)
+        self.translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, -3]))
 
         # TODO: create IBO
         self.ebo.create()
@@ -183,7 +203,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     window = MainWindow()
-    window.resize(800, 600)
+    window.resize(1280, 720)
     window.show()
 
     sys.exit(app.exec_())
