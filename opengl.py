@@ -12,7 +12,7 @@ from PySide2.QtGui import (
 from PySide2.QtWidgets import QOpenGLWidget
 from shiboken2.shiboken2 import VoidPtr
 
-from geometry import CUBE_INDICES, CUBE_VERTICES
+from geometry import Cube
 
 
 def print_surface_format(surface_format: QSurfaceFormat) -> str:
@@ -51,6 +51,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.camera_loc = None
         self.attrib_loc = None
 
+        self.shape = Cube()
         self.models = []
         self.model = None
         self.projection = None
@@ -103,7 +104,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
             model = pyrr.matrix44.multiply(rotation, model)
 
             gl.glUniformMatrix4fv(self.model_loc, 1, gl.GL_FALSE, model)
-            self.glDrawElements(gl.GL_TRIANGLES, len(CUBE_INDICES), gl.GL_UNSIGNED_INT, VoidPtr(0))
+            self.glDrawElements(gl.GL_TRIANGLES, len(self.shape.indices), gl.GL_UNSIGNED_INT, VoidPtr(0))
 
         self.program.release()
         vao_binder = None
@@ -117,13 +118,13 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
             raise RuntimeError("Unable to link shader program")
 
     def create_vbo(self) -> None:
-        self.program.bind()  # suspicious behaviour
+        self.program.bind()  # suspicious behaviour ?
         self.vao.create()
         vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
 
         self.vbo.create()
         self.vbo.bind()
-        self.vbo.allocate(CUBE_VERTICES, CUBE_VERTICES.nbytes)
+        self.vbo.allocate(self.shape.vertices, self.shape.vertices.nbytes)
 
         self.attrib_loc = self.program.attributeLocation("a_position")
         self.model_loc = self.program.uniformLocation("model")
@@ -140,7 +141,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         # TODO: create IBO
         self.ebo.create()
         self.ebo.bind()
-        self.ebo.allocate(CUBE_INDICES, CUBE_INDICES.nbytes)
+        self.ebo.allocate(self.shape.indices, self.shape.indices.nbytes)
 
         float_size = ctypes.sizeof(ctypes.c_float)  # (4)
         null = VoidPtr(0)
