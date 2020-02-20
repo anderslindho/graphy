@@ -4,7 +4,7 @@ import time
 
 import pyrr
 from OpenGL import GL as gl
-from PySide2.QtCore import QTimer, Slot
+from PySide2.QtCore import QCoreApplication, QTimer, Slot, QPoint
 from PySide2.QtGui import (
     QSurfaceFormat, QOpenGLFunctions, QOpenGLShaderProgram, QOpenGLBuffer,
     QOpenGLVertexArrayObject, QOpenGLContext, QOpenGLShader,
@@ -12,6 +12,7 @@ from PySide2.QtGui import (
 from PySide2.QtWidgets import QOpenGLWidget
 from shiboken2.shiboken2 import VoidPtr
 
+from camera import Camera
 from geometry import Cube
 
 
@@ -40,6 +41,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
     def __init__(self, fmt: QSurfaceFormat, parent=None, *args, **kwargs):
         QOpenGLWidget.__init__(self, parent, *args, **kwargs)
         QOpenGLFunctions.__init__(self, *args, **kwargs)
+        self.width, self.height = 1280, 720
 
         self.program = QOpenGLShaderProgram()
         self.vbo = QOpenGLBuffer(QOpenGLBuffer.VertexBuffer)
@@ -55,7 +57,9 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.models = []
         self.model = None
         self.projection = None
-        self.camera = None
+        #self.camera = None
+        self.camera = Camera()
+        self.last_pos = QPoint(self.width / 2, self.height / 2)
 
         self.setFormat(fmt)
         self.context = QOpenGLContext(self)
@@ -80,6 +84,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.render()
 
     def resizeGL(self, width: int, height: int) -> None:
+        self.width, self.height = width, height
         self.glViewport(0, 0, width, height)
         self.projection = pyrr.matrix44.create_perspective_projection_matrix(45, width/height, 0.1, 100)
 
@@ -89,7 +94,8 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
         # TODO: switch to Qt functions (doesn't work)
         gl.glUniformMatrix4fv(self.projection_loc, 1, gl.GL_FALSE, self.projection)
-        gl.glUniformMatrix4fv(self.camera_loc, 1, gl.GL_FALSE, self.camera)
+        view = self.camera.get_view_matrix()
+        gl.glUniformMatrix4fv(self.camera_loc, 1, gl.GL_FALSE, view)
 
         for model in self.models:
             # TODO: move to entity class ?
@@ -136,8 +142,8 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
             x, y, z = random.uniform(-15, 15), random.uniform(-10, 10), random.uniform(-10, 10)
             self.models.append(pyrr.matrix44.create_from_translation(pyrr.Vector3([x, y, z])))
 
-        eye, target, up = pyrr.Vector3([1, 0, 25]), pyrr.Vector3([0, 0, 0]), pyrr.Vector3([0, 0, 1])
-        self.camera = pyrr.matrix44.create_look_at(eye, target, up)
+        #eye, target, up = pyrr.Vector3([1, 0, 25]), pyrr.Vector3([0, 0, 0]), pyrr.Vector3([0, 0, 1])
+        #self.camera = pyrr.matrix44.create_look_at(eye, target, up)
 
         self.ebo.create()
         self.ebo.bind()
@@ -160,6 +166,18 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
         self.program.release()
         vao_binder = None
+
+    def mousePressEvent(self, event):
+        self.last_pos = QPoint(event.pos())
+
+    def mouseMoveEvent(self, event):
+        dx = event.x() - self.last_pos.x()
+        dy = event.y() - self.last_pos.y()
+
+        if event.buttons():
+            self.camera.process_mouse_movement(float(dx), float(dy))
+
+        self.last_pos = QPoint(event.pos())
 
     @Slot()
     def cleanup(self):

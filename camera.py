@@ -6,12 +6,12 @@ from pyrr import Vector3, matrix44, vector, vector3
 class Camera:
 
     def __init__(self):
-        self.camera_pos = Vector3([1, 0, 25])
-        self.camera_target = Vector3([0, 0, 0])
+        self.camera_pos = Vector3([1.0, 0.0, 25.0])
+        self.camera_target = Vector3([0.0, 0.0, 0.0])
 
-        self.camera_front = Vector3([0, 0, 1])
-        self.camera_up = Vector3([0, 1, 0])
-        self.camera_right = Vector3([1, 0, 0])
+        self.camera_front = Vector3([0.0, 0.0, -1.0])
+        self.camera_up = Vector3([0.0, 1.0, 0.0])
+        self.camera_right = Vector3([1.0, 0.0, 0.0])
 
         self.mouse_sens = 0.25
         self.jaw = -90
@@ -37,11 +37,11 @@ class Camera:
         self.update_camera_vectors()
 
     def update_camera_vectors(self):
-        front = Vector3([0, 0, 0])
+        front = Vector3([0.0, 0.0, 0.0])
         front.x = cos(radians(self.jaw)) * cos(radians(self.pitch))
         front.y = sin(radians(self.pitch))
         front.z = sin(radians(self.jaw)) * cos(radians(self.pitch))
 
         self.camera_front = vector.normalise(front)
-        self.camera_right = vector.normalise(vector3.cross(self.camera_front, Vector3([0, 1, 0])))
-        self.camera_up = vector.normalise(vector3.cross(self.camera_right, self.camera_front)
+        self.camera_right = vector.normalise(vector3.cross(self.camera_front, Vector3([0.0, 1.0, 0.0])))
+        self.camera_up = vector.normalise(vector3.cross(self.camera_right, self.camera_front))
