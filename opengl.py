@@ -84,20 +84,20 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.projection = pyrr.matrix44.create_perspective_projection_matrix(45, width/height, 0.1, 100)
 
     def render(self) -> None:
-        vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
-        if not self.program.isLinked():
-            raise RuntimeError("Shaders not linked")
         self.program.bind()
+        vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
 
-        gl.glUniformMatrix4fv(self.projection_loc, 1, gl.GL_FALSE, self.projection)  # TODO: switch to Qt functions (doesn't work
+        # TODO: switch to Qt functions (doesn't work)
+        gl.glUniformMatrix4fv(self.projection_loc, 1, gl.GL_FALSE, self.projection)
         gl.glUniformMatrix4fv(self.camera_loc, 1, gl.GL_FALSE, self.camera)
 
         for model in self.models:
-            rotation = pyrr.matrix44.create_from_axis_rotation(  # TODO: move to entity class
+            # TODO: move to entity class ?
+            rotation = pyrr.matrix44.create_from_axis_rotation(
                 pyrr.vector3.create_from_matrix44_translation(model),
                 time.time(),
             )
-            scale = pyrr.matrix44.create_from_scale(  # TODO: move to entity class
+            scale = pyrr.matrix44.create_from_scale(
                 pyrr.vector3.create_from_matrix44_translation(model) * 0.1,
             )
             rotation = pyrr.matrix44.multiply(scale, rotation)
@@ -119,6 +119,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
     def create_vbo(self) -> None:
         self.program.bind()  # suspicious behaviour ?
+
         self.vao.create()
         vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
 
