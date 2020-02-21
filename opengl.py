@@ -4,7 +4,7 @@ import time
 
 import pyrr
 from OpenGL import GL as gl
-from PySide2.QtCore import QCoreApplication, QTimer, Slot, QPoint, Qt
+from PySide2.QtCore import QTimer, Slot, QPoint, Qt
 from PySide2.QtGui import (
     QSurfaceFormat, QOpenGLFunctions, QOpenGLShaderProgram, QOpenGLBuffer,
     QOpenGLVertexArrayObject, QOpenGLContext, QOpenGLShader, Qt

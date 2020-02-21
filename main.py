@@ -37,7 +37,8 @@ class MainWindow(QMainWindow):
 
         print(print_surface_format(self.surface_format))
 
-    """helper functions since window grabs focus"""
+    ### Helper functions (since window grabs focus) ###
+
     def keyPressEvent(self, event):
         self.widget.keyPressEvent(event)
 
