@@ -2,6 +2,8 @@ from math import cos, radians, sin
 
 from pyrr import Vector3, matrix44, vector, vector3, quaternion
 
+TRACKING_CAMERA_VIEW = True
+
 
 class Camera:
 
@@ -13,19 +15,22 @@ class Camera:
         self.camera_up = Vector3([0.0, 1.0, 0.0])
         self.camera_right = Vector3([1.0, 0.0, 0.0])
 
-        self.mouse_sens = 0.25
+        self.look_around_mouse_sens = 0.25
+        self.track_mouse_sens = 0.01
         self.distance = 25.0
         self.jaw = -90.0
         self.pitch = 0.0
         self.roll = 0.0
 
     def get_view_matrix(self):
-        #return matrix44.create_look_at(self.camera_pos, self.camera_pos + self.camera_front, self.camera_up)
-        return matrix44.create_look_at(self.camera_pos, self.world_centre, self.camera_up)
+        if TRACKING_CAMERA_VIEW:
+            return matrix44.create_look_at(self.camera_pos, self.world_centre, self.camera_up)
+        else:
+            return matrix44.create_look_at(self.camera_pos, self.camera_pos + self.camera_front, self.camera_up)
 
     def look_around_mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
-        x_offset *= self.mouse_sens
-        y_offset *= self.mouse_sens
+        x_offset *= self.look_around_mouse_sens
+        y_offset *= self.look_around_mouse_sens
 
         self.jaw += x_offset
         self.pitch += y_offset
@@ -48,12 +53,12 @@ class Camera:
         self.camera_right = vector.normalise(vector3.cross(self.camera_front, Vector3([0.0, 1.0, 0.0])))
         self.camera_up = vector.normalise(vector3.cross(self.camera_right, self.camera_front))
 
-    def rotate_around_mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
-        x_offset *= self.mouse_sens
-        y_offset *= self.mouse_sens
+    def track_mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
+        x_offset *= self.track_mouse_sens
+        y_offset *= self.track_mouse_sens
 
-        self.jaw += x_offset * 0.05
-        # self.pitch += y_offset
+        self.jaw += x_offset
+        self.pitch += y_offset
 
         if constrain_pitch:
             if self.pitch > 45:
@@ -61,9 +66,9 @@ class Camera:
             elif self.pitch < -45:
                 self.pitch = 45.0
 
-        self.rotate_around_update_camera_vectors()
+        self.track_update_camera_vectors()
 
-    def rotate_around_update_camera_vectors(self):
+    def track_update_camera_vectors(self):
         pos = Vector3([0.0, 0.0, 0.0])
         pos.x = self.distance * cos(self.jaw)
         pos.y = 0
