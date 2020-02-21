@@ -81,6 +81,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
     def paintGL(self) -> None:
         self.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
         self.glEnable(gl.GL_DEPTH_TEST)
+        self.camera.move()
         self.render()
 
     def resizeGL(self, width: int, height: int) -> None:
@@ -171,6 +172,27 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
     ### Events ###
 
+    def keyPressEvent(self, event):
+        """W: 0x57, A: 0x41, S: 0x53, D: 0x44"""  # TODO: make keymap
+        if event.key() == int(0x57):
+            self.camera.keyboard_press("FORWARD")
+        elif event.key() == int(0x53):
+            self.camera.keyboard_press("BACKWARD")
+        if event.key() == int(0x41):
+            self.camera.keyboard_press("LEFT")
+        elif event.key() == int(0x44):
+            self.camera.keyboard_press("RIGHT")
+
+    def keyReleaseEvent(self, event):
+        if event.key() == int(0x57):
+            self.camera.keyboard_release("FORWARD")
+        elif event.key() == int(0x53):
+            self.camera.keyboard_release("BACKWARD")
+        if event.key() == int(0x41):
+            self.camera.keyboard_release("LEFT")
+        elif event.key() == int(0x44):
+            self.camera.keyboard_release("RIGHT")
+
     def mousePressEvent(self, event):
         self.last_pos = QPoint(event.pos())
         event.accept()
@@ -186,7 +208,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.last_pos = QPoint(event.pos())
 
     def wheelEvent(self, event):
-        if event.type() == Qt.ScrollBegin or event.type() == Qt.ScrollEnd:
+        if event.type() == Qt.ScrollBegin or event.type() == Qt.ScrollEnd:  # FIXME: doesn't seem to work, true divide err
             return
 
         degrees = event.delta() / 8

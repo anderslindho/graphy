@@ -16,10 +16,13 @@ class Camera:
         self.camera_right = Vector3([1.0, 0.0, 0.0])
 
         self.mouse_sens = 0.25
+        self.velocity = 1.0
         self.distance = 25.0
         self.yaw = 90.0
         self.pitch = 0.0
         self.roll = 0.0
+
+        self.direction = {direction: False for direction in "FORWARD BACKWARD LEFT RIGHT".split()}
 
     def get_view_matrix(self):
         if TRACKING_CAMERA_VIEW:
@@ -27,9 +30,33 @@ class Camera:
         else:
             return matrix44.create_look_at(self.camera_pos, self.camera_pos + self.camera_front, self.camera_up)
 
+    def keyboard_press(self, direction):
+        if TRACKING_CAMERA_VIEW:
+            return
+
+        self.direction[direction] = True
+
+    def keyboard_release(self, direction):
+        if TRACKING_CAMERA_VIEW:
+            return
+
+        self.direction[direction] = False
+
+    def move(self):
+        if self.direction["FORWARD"]:
+            self.camera_pos += self.camera_front * self.velocity
+        elif self.direction["BACKWARD"]:
+            self.camera_pos -= self.camera_front * self.velocity
+        if self.direction["LEFT"]:
+            self.camera_pos -= self.camera_right * self.velocity
+        elif self.direction["RIGHT"]:
+            self.camera_pos += self.camera_right * self.velocity
+
     def mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
+        if INVERT_MOUSE:
+            y_offset *= -1
         x_offset *= self.mouse_sens
-        y_offset *= self.mouse_sens if not INVERT_MOUSE else -1 * self.mouse_sens
+        y_offset *= self.mouse_sens if not TRACKING_CAMERA_VIEW else -1 * self.mouse_sens
 
         self.yaw += x_offset
         self.pitch += y_offset
@@ -46,6 +73,9 @@ class Camera:
             self.look_update_camera_vectors()
 
     def scroll_movement(self, steps):
+        if not TRACKING_CAMERA_VIEW:  # At least temporarily
+            return
+
         self.distance += steps
 
         if self.distance < 0.1:
