@@ -1,24 +1,23 @@
 from math import cos, radians, sin
 
-from pyrr import Vector3, matrix44, vector, vector3, quaternion
+from pyrr import Vector3, matrix44, vector, vector3
 
-TRACKING_CAMERA_VIEW = True
+from config import TRACKING_CAMERA_VIEW
 
 
 class Camera:
 
     def __init__(self):
-        self.camera_pos = Vector3([0.0, 0.0, 50.0])
+        self.camera_pos = Vector3([0.0, 0.0, 25.0])
         self.world_centre = Vector3([0.0, 0.0, 0.0])
 
         self.camera_front = Vector3([0.0, 0.0, -1.0])
         self.camera_up = Vector3([0.0, 1.0, 0.0])
         self.camera_right = Vector3([1.0, 0.0, 0.0])
 
-        self.look_around_mouse_sens = 0.25
-        self.track_mouse_sens = 0.25
-        self.distance = 50.0
-        self.jaw = -90.0
+        self.mouse_sens = 0.25
+        self.distance = 25.0
+        self.yaw = 0.0
         self.pitch = 0.0
         self.roll = 0.0
 
@@ -28,38 +27,21 @@ class Camera:
         else:
             return matrix44.create_look_at(self.camera_pos, self.camera_pos + self.camera_front, self.camera_up)
 
-    def look_around_mouse_movement(self, x_offset, y_offset, constrain_pitch=True): # TODO: refactor and merge w other mouse move
-        x_offset *= self.look_around_mouse_sens
-        y_offset *= -self.look_around_mouse_sens
-
-        self.jaw += x_offset
-        self.pitch += y_offset
-
-        if constrain_pitch:
-            if self.pitch > 45:
-                self.pitch = 45.0
-            elif self.pitch < -45:
-                self.pitch = -45.0
-
-        self.look_around_update_camera_vectors()
-
     def look_around_update_camera_vectors(self):
         front = Vector3([0.0, 0.0, 0.0])
-        front.x = cos(radians(self.jaw)) * cos(radians(self.pitch))
+        front.x = cos(radians(self.yaw)) * cos(radians(self.pitch))
         front.y = sin(radians(self.pitch))
-        front.z = sin(radians(self.jaw)) * cos(radians(self.pitch))
-
-        print(f"self.pitch = {self.pitch}, self.jaw = {self.jaw}")
+        front.z = sin(radians(self.yaw)) * cos(radians(self.pitch))
 
         self.camera_front = vector.normalise(front)
         self.camera_right = vector.normalise(vector3.cross(self.camera_front, Vector3([0.0, 1.0, 0.0])))
         self.camera_up = vector.normalise(vector3.cross(self.camera_right, self.camera_front))
 
-    def track_mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
-        x_offset *= self.track_mouse_sens
-        y_offset *= -self.track_mouse_sens
+    def mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
+        x_offset *= self.mouse_sens
+        y_offset *= self.mouse_sens
 
-        self.jaw += x_offset
+        self.yaw += x_offset
         self.pitch += y_offset
 
         if constrain_pitch:
@@ -68,18 +50,17 @@ class Camera:
             elif self.pitch < -45:
                 self.pitch = -45.0
 
-        self.track_update_camera_vectors()
+        if TRACKING_CAMERA_VIEW:
+            self.track_update_camera_vectors()
+        else:
+            self.look_around_update_camera_vectors()
 
     def track_update_camera_vectors(self):
         pos = Vector3([0.0, 0.0, 0.0])
-        #pos.x = self.distance * cos(self.jaw)
-        #pos.y = 0
-        #pos.z = self.distance * sin(self.jaw)
-        pos.x = self.distance * cos(radians(self.jaw)) * cos(radians(self.pitch))
+        pos.x = self.distance * cos(radians(self.yaw)) * cos(radians(self.pitch))
         pos.y = self.distance * sin(radians(self.pitch))
-        pos.z = self.distance * sin(radians(self.jaw)) * cos(radians(self.pitch))
+        pos.z = self.distance * sin(radians(self.yaw)) * cos(radians(self.pitch))
 
-        #print(f"self.pitch = {self.pitch}, self.jaw = {self.jaw}")
         self.camera_pos = pos
         self.camera_right = vector.normalise(vector3.cross(self.world_centre, self.camera_up))
 

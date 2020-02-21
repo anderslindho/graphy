@@ -1,0 +1,3 @@
+
+
+TRACKING_CAMERA_VIEW = True

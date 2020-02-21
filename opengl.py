@@ -15,8 +15,6 @@ from shiboken2.shiboken2 import VoidPtr
 from camera import Camera
 from geometry import Cube
 
-TRACKING_CAMERA_VIEW = True
-
 
 def print_surface_format(surface_format: QSurfaceFormat) -> str:
     profile_name = 'core' if surface_format.profile() == QSurfaceFormat.CoreProfile else 'compatibility'
@@ -174,10 +172,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         dy = event.y() - self.last_pos.y()
 
         if event.buttons():
-            if TRACKING_CAMERA_VIEW:
-                self.camera.track_mouse_movement(float(dx), float(dy))
-            else:
-                self.camera.look_around_mouse_movement(float(dx), float(dy))
+            self.camera.mouse_movement(float(dx), float(dy))
 
         self.last_pos = QPoint(event.pos())
 
