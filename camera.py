@@ -27,16 +27,6 @@ class Camera:
         else:
             return matrix44.create_look_at(self.camera_pos, self.camera_pos + self.camera_front, self.camera_up)
 
-    def look_around_update_camera_vectors(self):
-        front = Vector3([0.0, 0.0, 0.0])
-        front.x = cos(radians(self.yaw)) * cos(radians(self.pitch))
-        front.y = sin(radians(self.pitch))
-        front.z = sin(radians(self.yaw)) * cos(radians(self.pitch))
-
-        self.camera_front = vector.normalise(front)
-        self.camera_right = vector.normalise(vector3.cross(self.camera_front, Vector3([0.0, 1.0, 0.0])))
-        self.camera_up = vector.normalise(vector3.cross(self.camera_right, self.camera_front))
-
     def mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
         x_offset *= self.mouse_sens
         y_offset *= self.mouse_sens
@@ -54,6 +44,29 @@ class Camera:
             self.track_update_camera_vectors()
         else:
             self.look_around_update_camera_vectors()
+
+    def scroll_movement(self, steps):
+        self.distance -= steps
+
+        if self.distance < 0.1:
+            self.distance = 0.1
+        elif self.distance > 100:
+            self.distance = 100.0
+
+        if TRACKING_CAMERA_VIEW:
+            self.track_update_camera_vectors()
+        else:
+            self.look_around_update_camera_vectors()
+
+    def look_around_update_camera_vectors(self):
+        front = Vector3([0.0, 0.0, 0.0])
+        front.x = cos(radians(self.yaw)) * cos(radians(self.pitch))
+        front.y = sin(radians(self.pitch))
+        front.z = sin(radians(self.yaw)) * cos(radians(self.pitch))
+
+        self.camera_front = vector.normalise(front)
+        self.camera_right = vector.normalise(vector3.cross(self.camera_front, Vector3([0.0, 1.0, 0.0])))
+        self.camera_up = vector.normalise(vector3.cross(self.camera_right, self.camera_front))
 
     def track_update_camera_vectors(self):
         pos = Vector3([0.0, 0.0, 0.0])

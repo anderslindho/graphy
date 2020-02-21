@@ -86,7 +86,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
     def resizeGL(self, width: int, height: int) -> None:
         self.width, self.height = width, height
         self.glViewport(0, 0, width, height)
-        self.projection = pyrr.matrix44.create_perspective_projection_matrix(45, width/height, 0.1, 100)
+        self.projection = pyrr.matrix44.create_perspective_projection_matrix(45, width/height, 0.1, 120)
 
     def render(self) -> None:
         self.program.bind()
@@ -175,6 +175,12 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
             self.camera.mouse_movement(float(dx), float(dy))
 
         self.last_pos = QPoint(event.pos())
+
+    def wheelEvent(self, event):
+        degrees = event.delta() / 8
+        steps = degrees / 15
+
+        self.camera.scroll_movement(steps)
 
     @Slot()
     def cleanup(self):
