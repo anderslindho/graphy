@@ -14,7 +14,6 @@ from shiboken2.shiboken2 import VoidPtr
 
 from camera import Camera
 from geometry import Cube
-import config
 
 TRACKING_CAMERA_VIEW = True
 
@@ -62,7 +61,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.projection = None
 
         self.camera = Camera()
-        self.last_pos = QPoint(self.width / 2, self.height / 2)
+        self.last_pos = QPoint(self.width / 2.0, self.height / 2.0)
 
         self.setFormat(fmt)
         self.context = QOpenGLContext(self)
@@ -141,7 +140,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.projection_loc = self.program.uniformLocation("projection")
         self.camera_loc = self.program.uniformLocation("camera")
 
-        for i in range(200):
+        for i in range(50):
             x, y, z = random.uniform(-10, 10), random.uniform(-10, 10), random.uniform(-10, 10)
             self.models.append(pyrr.matrix44.create_from_translation(pyrr.Vector3([x, y, z])))
 

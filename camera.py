@@ -8,7 +8,7 @@ TRACKING_CAMERA_VIEW = True
 class Camera:
 
     def __init__(self):
-        self.camera_pos = Vector3([0.0, 0.0, 25.0])
+        self.camera_pos = Vector3([0.0, 0.0, 50.0])
         self.world_centre = Vector3([0.0, 0.0, 0.0])
 
         self.camera_front = Vector3([0.0, 0.0, -1.0])
@@ -17,7 +17,7 @@ class Camera:
 
         self.look_around_mouse_sens = 0.25
         self.track_mouse_sens = 0.01
-        self.distance = 25.0
+        self.distance = 50.0
         self.jaw = -90.0
         self.pitch = 0.0
         self.roll = 0.0
@@ -28,7 +28,7 @@ class Camera:
         else:
             return matrix44.create_look_at(self.camera_pos, self.camera_pos + self.camera_front, self.camera_up)
 
-    def look_around_mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
+    def look_around_mouse_movement(self, x_offset, y_offset, constrain_pitch=True): # TODO: refactor and merge w other mouse move
         x_offset *= self.look_around_mouse_sens
         y_offset *= self.look_around_mouse_sens
 
@@ -55,25 +55,29 @@ class Camera:
 
     def track_mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
         x_offset *= self.track_mouse_sens
-        y_offset *= self.track_mouse_sens
+        y_offset *= -self.track_mouse_sens
 
         self.jaw += x_offset
         self.pitch += y_offset
 
         if constrain_pitch:
-            if self.pitch > 45:
-                self.pitch = 45.0
-            elif self.pitch < -45:
-                self.pitch = 45.0
+            if self.pitch > 0.45:
+                self.pitch = 0.45
+            elif self.pitch < -0.45:
+                self.pitch = -0.45
 
         self.track_update_camera_vectors()
 
     def track_update_camera_vectors(self):
         pos = Vector3([0.0, 0.0, 0.0])
-        pos.x = self.distance * cos(self.jaw)
-        pos.y = 0
-        pos.z = self.distance * sin(self.jaw)
+        #pos.x = self.distance * cos(self.jaw)
+        #pos.y = 0
+        #pos.z = self.distance * sin(self.jaw)
+        pos.x = self.distance * cos(self.jaw) * cos(self.pitch)
+        pos.y = self.distance * sin(self.pitch)
+        pos.z = self.distance * sin(self.jaw) * cos(self.pitch)
 
+        #print(f"self.pitch = {self.pitch}, self.jaw = {self.jaw}")
         self.camera_pos = pos
-        self.camera_right = vector.normalise(vector3.cross(self.camera_front, self.camera_up))
+        self.camera_right = vector.normalise(vector3.cross(self.world_centre, self.camera_up))
 
