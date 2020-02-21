@@ -1,3 +1,4 @@
 
 
 TRACKING_CAMERA_VIEW = True
+INVERT_MOUSE = False

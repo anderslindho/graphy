@@ -4,10 +4,10 @@ import time
 
 import pyrr
 from OpenGL import GL as gl
-from PySide2.QtCore import QCoreApplication, QTimer, Slot, QPoint
+from PySide2.QtCore import QCoreApplication, QTimer, Slot, QPoint, Qt
 from PySide2.QtGui import (
     QSurfaceFormat, QOpenGLFunctions, QOpenGLShaderProgram, QOpenGLBuffer,
-    QOpenGLVertexArrayObject, QOpenGLContext, QOpenGLShader,
+    QOpenGLVertexArrayObject, QOpenGLContext, QOpenGLShader, Qt
 )
 from PySide2.QtWidgets import QOpenGLWidget
 from shiboken2.shiboken2 import VoidPtr
@@ -17,10 +17,8 @@ from geometry import Cube
 
 
 def print_surface_format(surface_format: QSurfaceFormat) -> str:
-    profile_name = 'core' if surface_format.profile() == QSurfaceFormat.CoreProfile else 'compatibility'
-
     return "{} version {}.{}".format(
-        profile_name,
+        'core' if surface_format.profile() == QSurfaceFormat.CoreProfile else 'compatibility',
         surface_format.majorVersion(),
         surface_format.minorVersion(),
     )
@@ -70,13 +68,15 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.timer.timeout.connect(self.update)
         self.timer.start(20)
 
+    ### QtGL ###
+
     def initializeGL(self) -> None:
         self.context.aboutToBeDestroyed.connect(self.cleanup)
 
         self.initializeOpenGLFunctions()
         self.build_shaders()
         self.create_vbo()
-        self.glClearColor(0.1, 0.0, 0.1, 0.5)
+        self.glClearColor(0.0, 0.0, 0.0, 0.5)
 
     def paintGL(self) -> None:
         self.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
@@ -86,7 +86,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
     def resizeGL(self, width: int, height: int) -> None:
         self.width, self.height = width, height
         self.glViewport(0, 0, width, height)
-        self.projection = pyrr.matrix44.create_perspective_projection_matrix(45, width/height, 0.1, 120)
+        self.projection = pyrr.matrix44.create_perspective_projection_matrix(45, width/height, 0.1, 150)
 
     def render(self) -> None:
         self.program.bind()
@@ -109,11 +109,15 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
             rotation = pyrr.matrix44.multiply(scale, rotation)
             model = pyrr.matrix44.multiply(rotation, model)
 
+            orbit = pyrr.Matrix44.from_y_rotation(-0.1*time.time())
+            model = pyrr.matrix44.multiply(model, orbit)
             gl.glUniformMatrix4fv(self.model_loc, 1, gl.GL_FALSE, model)
             self.glDrawElements(gl.GL_TRIANGLES, len(self.shape.indices), gl.GL_UNSIGNED_INT, VoidPtr(0))
 
         self.program.release()
         vao_binder = None
+
+    ### Helpers ###
 
     def build_shaders(self) -> None:
         if not self.program.addShaderFromSourceFile(QOpenGLShader.Vertex, "vertex_shader.glsl"):
@@ -139,7 +143,8 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.camera_loc = self.program.uniformLocation("camera")
 
         for i in range(50):
-            x, y, z = random.uniform(-10, 10), random.uniform(-10, 10), random.uniform(-10, 10)
+            # x, y, z = random.uniform(-10, 10), random.uniform(-10, 10), random.uniform(-10, 10)
+            x, y, z = random.normalvariate(0, 15), random.normalvariate(0, 15), random.normalvariate(0, 15)
             self.models.append(pyrr.matrix44.create_from_translation(pyrr.Vector3([x, y, z])))
 
         self.ebo.create()
@@ -164,8 +169,11 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.program.release()
         vao_binder = None
 
+    ### Events ###
+
     def mousePressEvent(self, event):
         self.last_pos = QPoint(event.pos())
+        event.accept()
 
     def mouseMoveEvent(self, event):
         dx = event.x() - self.last_pos.x()
@@ -174,13 +182,20 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         if event.buttons():
             self.camera.mouse_movement(float(dx), float(dy))
 
+        event.accept()
         self.last_pos = QPoint(event.pos())
 
     def wheelEvent(self, event):
+        if event.type() == Qt.ScrollBegin or event.type() == Qt.ScrollEnd:
+            return
+
         degrees = event.delta() / 8
         steps = degrees / 15
 
+        event.accept()
         self.camera.scroll_movement(steps)
+
+    ### Slots ###
 
     @Slot()
     def cleanup(self):
