@@ -16,7 +16,7 @@ class Camera:
         self.camera_right = Vector3([1.0, 0.0, 0.0])
 
         self.look_around_mouse_sens = 0.25
-        self.track_mouse_sens = 0.01
+        self.track_mouse_sens = 0.25
         self.distance = 50.0
         self.jaw = -90.0
         self.pitch = 0.0
@@ -30,7 +30,7 @@ class Camera:
 
     def look_around_mouse_movement(self, x_offset, y_offset, constrain_pitch=True): # TODO: refactor and merge w other mouse move
         x_offset *= self.look_around_mouse_sens
-        y_offset *= self.look_around_mouse_sens
+        y_offset *= -self.look_around_mouse_sens
 
         self.jaw += x_offset
         self.pitch += y_offset
@@ -49,6 +49,8 @@ class Camera:
         front.y = sin(radians(self.pitch))
         front.z = sin(radians(self.jaw)) * cos(radians(self.pitch))
 
+        print(f"self.pitch = {self.pitch}, self.jaw = {self.jaw}")
+
         self.camera_front = vector.normalise(front)
         self.camera_right = vector.normalise(vector3.cross(self.camera_front, Vector3([0.0, 1.0, 0.0])))
         self.camera_up = vector.normalise(vector3.cross(self.camera_right, self.camera_front))
@@ -61,10 +63,10 @@ class Camera:
         self.pitch += y_offset
 
         if constrain_pitch:
-            if self.pitch > 0.45:
-                self.pitch = 0.45
-            elif self.pitch < -0.45:
-                self.pitch = -0.45
+            if self.pitch > 45:
+                self.pitch = 45.0
+            elif self.pitch < -45:
+                self.pitch = -45.0
 
         self.track_update_camera_vectors()
 
@@ -73,9 +75,9 @@ class Camera:
         #pos.x = self.distance * cos(self.jaw)
         #pos.y = 0
         #pos.z = self.distance * sin(self.jaw)
-        pos.x = self.distance * cos(self.jaw) * cos(self.pitch)
-        pos.y = self.distance * sin(self.pitch)
-        pos.z = self.distance * sin(self.jaw) * cos(self.pitch)
+        pos.x = self.distance * cos(radians(self.jaw)) * cos(radians(self.pitch))
+        pos.y = self.distance * sin(radians(self.pitch))
+        pos.z = self.distance * sin(radians(self.jaw)) * cos(radians(self.pitch))
 
         #print(f"self.pitch = {self.pitch}, self.jaw = {self.jaw}")
         self.camera_pos = pos
