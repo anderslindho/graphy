@@ -6,13 +6,14 @@ import pyrr
 from OpenGL import GL as gl
 from PySide2.QtCore import QTimer, Slot, QPoint, Qt
 from PySide2.QtGui import (
-    QSurfaceFormat, QOpenGLFunctions, QOpenGLShaderProgram, QOpenGLBuffer,
+    QSurfaceFormat, QOpenGLExtraFunctions, QOpenGLShaderProgram, QOpenGLBuffer,
     QOpenGLVertexArrayObject, QOpenGLContext, QOpenGLShader, Qt
 )
 from PySide2.QtWidgets import QOpenGLWidget
 from shiboken2.shiboken2 import VoidPtr
 
 from camera import Camera
+from config import FPS
 from geometry import Cube
 
 
@@ -34,11 +35,11 @@ def set_format() -> QSurfaceFormat:
     return surface_format
 
 
-class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
+class OpenGLWidget(QOpenGLWidget, QOpenGLExtraFunctions):
 
     def __init__(self, fmt: QSurfaceFormat, parent=None, *args, **kwargs):
         QOpenGLWidget.__init__(self, parent, *args, **kwargs)
-        QOpenGLFunctions.__init__(self, *args, **kwargs)
+        QOpenGLExtraFunctions.__init__(self, *args, **kwargs)
         self.width, self.height = 1280, 720
 
         self.program = QOpenGLShaderProgram()
@@ -66,7 +67,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update)
-        self.timer.start(20)
+        self.timer.start(1000.0/FPS)
 
     ### QtGL ###
 
@@ -76,7 +77,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.initializeOpenGLFunctions()
         self.build_shaders()
         self.create_vbo()
-        self.glClearColor(0.0, 0.0, 0.0, 0.5)
+        self.glClearColor(0.2, 0.0, 0.2, 0.5)
 
     def paintGL(self) -> None:
         self.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
@@ -143,8 +144,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.projection_loc = self.program.uniformLocation("projection")
         self.camera_loc = self.program.uniformLocation("camera")
 
-        for i in range(50):
-            # x, y, z = random.uniform(-10, 10), random.uniform(-10, 10), random.uniform(-10, 10)
+        for i in range(150):
             x, y, z = random.normalvariate(0, 15), random.normalvariate(0, 15), random.normalvariate(0, 15)
             self.models.append(pyrr.matrix44.create_from_translation(pyrr.Vector3([x, y, z])))
 
@@ -208,7 +208,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.last_pos = QPoint(event.pos())
 
     def wheelEvent(self, event):
-        if event.type() == Qt.ScrollBegin or event.type() == Qt.ScrollEnd:  # FIXME: doesn't seem to work, true divide err
+        if event.type() in (Qt.ScrollBegin, Qt.ScrollEnd):  # FIXME: doesn't seem to work, true divide err
             return
 
         degrees = event.delta() / 8

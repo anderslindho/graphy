@@ -18,7 +18,7 @@ class Camera:
         self.mouse_sens = 0.25
         self.velocity = 1.0
         self.distance = 25.0
-        self.yaw = 90.0
+        self.yaw = 90.0 if TRACKING_CAMERA_VIEW else -90.0  # FIXME: just sort out the calculations...
         self.pitch = 0.0
         self.roll = 0.0
 
@@ -43,6 +43,7 @@ class Camera:
         self.direction[direction] = False
 
     def move(self):
+        """WASD controls"""
         if self.direction["FORWARD"]:
             self.camera_pos += self.camera_front * self.velocity
         elif self.direction["BACKWARD"]:
