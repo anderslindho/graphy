@@ -18,11 +18,12 @@ class Camera:
         self.mouse_sens = 0.25
         self.velocity = 1.0
         self.distance = 25.0
+
         self.yaw = 90.0 if TRACKING_CAMERA_VIEW else -90.0  # FIXME: just sort out the calculations...
         self.pitch = 0.0
         self.roll = 0.0
 
-        self.direction = {direction: False for direction in "FORWARD BACKWARD LEFT RIGHT".split()}
+        self.direction = {direction: False for direction in "FORWARD BACKWARD LEFT RIGHT UP DOWN".split()}
 
     def get_view_matrix(self):
         if TRACKING_CAMERA_VIEW:
@@ -52,6 +53,10 @@ class Camera:
             self.camera_pos -= self.camera_right * self.velocity
         elif self.direction["RIGHT"]:
             self.camera_pos += self.camera_right * self.velocity
+        if self.direction["UP"]:
+            self.camera_pos += self.camera_up * self.velocity
+        elif self.direction["DOWN"]:
+            self.camera_pos -= self.camera_up * self.velocity
 
     def mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
         if INVERT_MOUSE:
@@ -96,7 +101,7 @@ class Camera:
         front.z = sin(radians(self.yaw)) * cos(radians(self.pitch))
 
         self.camera_front = vector.normalise(front)
-        self.camera_right = vector.normalise(vector3.cross(self.camera_front, Vector3([0.0, 1.0, 0.0])))
+        self.camera_right = vector.normalise(vector3.cross(self.camera_front, self.camera_up))
         # self.camera_up = vector.normalise(vector3.cross(self.camera_right, self.camera_front))
 
     def track_update_camera_vectors(self):

@@ -173,7 +173,7 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLExtraFunctions):
     ### Events ###
 
     def keyPressEvent(self, event):
-        """W: 0x57, A: 0x41, S: 0x53, D: 0x44"""  # TODO: make keymap
+        """W: 0x57, A: 0x41, S: 0x53, D: 0x44, space: 0x20, shift: 0x01000020"""  # TODO: make keymap
         if event.key() == int(0x57):
             self.camera.keyboard_press("FORWARD")
         elif event.key() == int(0x53):
@@ -182,6 +182,10 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLExtraFunctions):
             self.camera.keyboard_press("LEFT")
         elif event.key() == int(0x44):
             self.camera.keyboard_press("RIGHT")
+        if event.key() == int(0x20):
+            self.camera.keyboard_press("UP")
+        elif event.key() == int(0x01000020):
+            self.camera.keyboard_press("DOWN")
 
     def keyReleaseEvent(self, event):
         if event.key() == int(0x57):
@@ -192,6 +196,10 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLExtraFunctions):
             self.camera.keyboard_release("LEFT")
         elif event.key() == int(0x44):
             self.camera.keyboard_release("RIGHT")
+        if event.key() == int(0x20):
+            self.camera.keyboard_release("UP")
+        elif event.key() == int(0x01000020):
+            self.camera.keyboard_release("DOWN")
 
     def mousePressEvent(self, event):
         self.last_pos = QPoint(event.pos())
