@@ -19,7 +19,7 @@ class Camera:
         self.velocity = 1.0
         self.distance = 25.0
 
-        self.yaw = 90.0 if TRACKING_CAMERA_VIEW else -90.0  # FIXME: just sort out the calculations...
+        self.yaw = 90.0 if TRACKING_CAMERA_VIEW else -90.0  # FIXME: fix self.camera_front calcs in mouse_movement()
         self.pitch = 0.0
         self.roll = 0.0
 
@@ -44,7 +44,6 @@ class Camera:
         self.direction[direction] = False
 
     def move(self):
-        """WASD controls"""
         if self.direction["FORWARD"]:
             self.camera_pos += self.camera_front * self.velocity
         elif self.direction["BACKWARD"]:
@@ -62,7 +61,7 @@ class Camera:
         if INVERT_MOUSE:
             y_offset *= -1
         x_offset *= self.mouse_sens
-        y_offset *= self.mouse_sens if not TRACKING_CAMERA_VIEW else -1 * self.mouse_sens
+        y_offset *= self.mouse_sens
 
         self.yaw += x_offset
         self.pitch += y_offset
@@ -102,7 +101,6 @@ class Camera:
 
         self.camera_front = vector.normalise(front)
         self.camera_right = vector.normalise(vector3.cross(self.camera_front, self.camera_up))
-        # self.camera_up = vector.normalise(vector3.cross(self.camera_right, self.camera_front))
 
     def track_update_camera_vectors(self):
         pos = Vector3([0.0, 0.0, 0.0])
