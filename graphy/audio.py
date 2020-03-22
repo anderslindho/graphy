@@ -5,13 +5,13 @@ from collections import deque
 
 class AudioEngine:
 
-    def __init__(self, sample_size=pyaudio.paInt16, channels=2, sample_rate=44100, chunk=1024):
+    def __init__(self, sample_size=pyaudio.paInt16, channels=1, sample_rate=44100, chunk=1024):
         self.sample_format = sample_size
         self.channels = channels
         self._sample_rate = sample_rate
         self.chunk = chunk
 
-        self.data = np.empty(self.chunk * 2)
+        self.data = np.empty(self.chunk * self.channels)
         self.frames = deque()
         self.frame_time_delta = 0
         self.last_callback_time = 0
@@ -61,12 +61,12 @@ class AudioEngine:
         return np.array(self.frames)
 
     def get_padded_sample_log(self):
-        if len(self.get_sample_log()) >= (self.chunk * 2):
-            return self.get_sample_log()[-(self.chunk * 2):]
+        if len(self.get_sample_log()) >= (self.chunk * self.channels):
+            return self.get_sample_log()[-(self.chunk * self.channels):]
         else:
             return np.pad(
                 self.get_sample_log(),
-                [(self.chunk * 2) - len(self.get_sample_log()), 0],
+                [(self.chunk * self.channels) - len(self.get_sample_log()), 0],
                 "constant", constant_values=0
             )
 
