@@ -12,9 +12,9 @@ from PySide2.QtGui import (
 from PySide2.QtWidgets import QOpenGLWidget
 from shiboken2.shiboken2 import VoidPtr
 
-from camera import Camera
+from graphy.camera import Camera
 from config import FPS
-from geometry import Cube
+from graphy.geometry import Cube
 
 
 def print_surface_format(surface_format: QSurfaceFormat) -> str:
@@ -122,9 +122,9 @@ class OpenGLWidget(QOpenGLWidget, QOpenGLExtraFunctions):
     ### Helpers ###
 
     def build_shaders(self) -> None:
-        if not self.program.addShaderFromSourceFile(QOpenGLShader.Vertex, "vertex_shader.glsl"):
+        if not self.program.addShaderFromSourceFile(QOpenGLShader.Vertex, "shaders/vertex_shader.glsl"):
             raise FileNotFoundError("Unable to load vertex shader")
-        if not self.program.addShaderFromSourceFile(QOpenGLShader.Fragment, "fragment_shader.glsl"):
+        if not self.program.addShaderFromSourceFile(QOpenGLShader.Fragment, "shaders/fragment_shader.glsl"):
             raise FileNotFoundError("Unable to load fragment shader")
         if not self.program.link():
             raise RuntimeError("Unable to link shader program")

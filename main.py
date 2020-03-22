@@ -4,7 +4,7 @@ import sys
 
 from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 
-from opengl import print_surface_format, set_format, OpenGLWidget
+from graphy.opengl import print_surface_format, set_format, OpenGLWidget
 
 
 try:
